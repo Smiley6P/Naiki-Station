@@ -12,13 +12,15 @@ kemudian, saya membuat model Product pada aplikasi main dengan membuka models.py
 
 untuk membuat tampilan web, pertama saya buat folder templates di directory aplikasi main dan kemudian membuatt berkas baru bernama main.html dan ngisi berkas tersebut dengan 
 
- `<h1>Naiki Station</h1>`
-`<h5>NPM: </h5>`
-`<p>{{ npm }}</p>`
-`<h5>Name: </h5>`
-`<p>{{ name }}<p>`
-`<h5>Class: </h5>`
-`<p>{{ class }}</p>`
+```
+<h1>Naiki Station</h1>
+<h5>NPM: </h5>
+<p>{{ npm }}</p>
+<h5>Name: </h5>
+<p>{{ name }}<p>
+<h5>Class: </h5>
+<p>{{ class }}</p>
+```
 
 kemudian memodifikasi file views.py di directory aplikasi. dengan memasukkan kode:
 
