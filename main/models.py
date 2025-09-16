@@ -19,6 +19,7 @@ class Product(models.Model):
     thumbnail = models.URLField()
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    last_viewed = models.DateTimeField(null=True, blank=True)
     
 
     def __str__(self):

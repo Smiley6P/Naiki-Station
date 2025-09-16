@@ -1,17 +1,19 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block content %}
 <h1>Naiki Station</h1>
 
-<h5>Name: </h5>
-<p>{{ name }}<p>
-<h5>NPM: </h5>
-<p>{{ npm }}</p>
-<h5>Class: </h5>
-<p>{{ class }}</p>
-
-<a href="{% url 'main:create_product' %}">
-  <button>+ Add Product</button>
-</a>
+<div class="profile-card">
+  <h5>Name:</h5>
+  <p>{{ name }}</p>
+  <h5>NPM:</h5>
+  <p>{{ npm }}</p>
+  <h5>Class:</h5>
+  <p>{{ class }}</p>
+  <a href="{% url 'main:create_product' %}">
+    <button>+ Add Product</button>
+  </a>
+</div>
 
 <hr>
 
@@ -20,21 +22,31 @@
 {% else %}
 <h3>Catalog Product Naiki Station</h3>
 {% for product in Product_list %}
-<div>
+<div class="product-card">
   <h2><a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a></h2>
 
-  <p><b>{{ product.get_category_display }}</b>{% if product.is_featured %} | 
-    <b>Featured</b>
-    {% endif %} | <i>{{ product.created_at|date:"d M Y H:i" }}</i></p>
+  <p class="product-meta">
+    <b>{{ product.get_category_display }}</b>
+    {% if product.is_featured %} | <b>Featured</b>{% endif %}
+    | <i>{{ product.created_at|naturaltime }}</i>
+  </p>
 
   {% if product.thumbnail %}
-  <img src="{{ product.thumbnail }}" alt="thumbnail" width="150" height="100">
-  <br />
+    <img src="{{ product.thumbnail }}" alt="thumbnail" width="150" height="100">
+    <br />
   {% endif %}
 
   <p>{{ product.description|truncatewords:25 }}...</p>
+  <p>Price: Rp {{ product.price|intcomma }}</p>
 
   <p><a href="{% url 'main:show_product' product.id %}"><button>Detail</button></a></p>
+  <p class="last-viewed">Last viewed:
+   {% if product.last_viewed %}
+      {{ product.last_viewed|timesince }} ago
+   {% else %}
+      Never viewed
+   {% endif %}
+  </p>
 </div>
 
 <hr>

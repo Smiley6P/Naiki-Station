@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.core import serializers
 from django.http import HttpResponse
 from .models import Product
@@ -34,6 +35,8 @@ def create_product(request):
 def show_product(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     context = {'product': product}
+    product.last_viewed = timezone.now()
+    product.save(update_fields=["last_viewed"])  
     return render(request, 'product_detail.html', context)
 
 
