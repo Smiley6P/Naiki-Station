@@ -82,7 +82,7 @@ git push pws master
 
 ### 2. Buatlah bagan yang berisi *request client* ke web aplikasi berbasis Django beserta responnya dan jelaskan pada bagan tersebut kaitan antara `urls.py`, `views.py`, `models.py`, dan berkas `html`.
 
-![Bagan](READMEFILES/t_\(2\)\(1\).png)
+![Bagan](READMEFILES/bagan.png)
 
 ### 3. Jelaskan peran `settings.py` dalam proyek Django!
 
@@ -303,8 +303,9 @@ def show_product(request, product_id):
 ![tampilan web](READMEFILES/pasted_image_20250917090238.png)
 ![tampilan XML](READMEFILES/pasted_image_20250917090436.png)
 ![tampilan JSON](READMEFILES/pasted_image_20250917090548.png)
-![tampilan XML\_by\_id](READMEFILES/pasted_image_20250917090842.png)
-![tampilan JSON\_by\_id](READMEFILES/pasted_image_20250917091020.png)
+![tampilan XML_by_id](READMEFILES/pasted_image_20250917090842.png)
+![tampilan JSON_by_id](READMEFILES/pasted_image_20250917091020.png)
+
 
 
 ---
