@@ -1,4 +1,3 @@
-Oke Andrew, kita bakal bikin versi **GitHub-ready** dari README.md kamu **tanpa mengubah kontennya sama sekali**, cuma perbaiki **formatting, backtick, spasi, dan path image** supaya semua terdeteksi. Aku juga akan menambahkan **newline yang tepat** sebelum/selesai block code dan image agar GitHub nggak berantakan.
 
 ---
 
