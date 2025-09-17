@@ -126,6 +126,7 @@ Menurutku, arahan, tutorial, dan asistensi oleh asisten dosen sudah sangat baik 
 	     return HttpResponse(xml_data, content_type="application/xml")
 		```
 		
+        
 		```python
 	#return JSON
 	def show_json(request):
@@ -297,6 +298,7 @@ def show_json_by_id(request, product_id):
 			  "is_featured"]
 	  ```
 	  dengan masing-masing elemen dalam fields adalah atribut yang terdapat di dalam `models.py`. kemudian saya koneksikan forms ini ke fungsi `create_product` di views.py sekalian dengan `product_details` :
+
 	  ```python views.py
 	  from .models import Product
 	  from django.shortcuts import render, redirect, get_object_or_404
