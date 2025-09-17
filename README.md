@@ -1,13 +1,12 @@
 
 ---
 
-````markdown
 ## Tautan Aplikasi PWS:
 https://andrew-sanjay-naikistation.pbp.cs.ui.ac.id/
 
 ## Jawaban Pertanyaan
 
-## Tugas 2
+# Tugas 2
 <details>
 <summary>Jawaban</summary>
 
@@ -29,7 +28,7 @@ Untuk membuat tampilan web, pertama saya buat folder templates di directory apli
 <p>{{ name }}</p>
 <h5>Class: </h5>
 <p>{{ class }}</p>
-````
+```
 
 Kemudian memodifikasi file views.py di directory aplikasi dengan memasukkan kode:
 
@@ -103,7 +102,7 @@ Menurutku, arahan, tutorial, dan asistensi oleh asisten dosen sudah sangat baik 
 
 </details>
 
-## Tugas 3
+# Tugas 3
 
 1. **Jelaskan mengapa kita memerlukan *data delivery* dalam pengimplementasian sebuah platform?**
 
@@ -307,6 +306,5 @@ def show_product(request, product_id):
 ![tampilan XML\_by\_id](READMEFILES/pasted_image_20250917090842.png)
 ![tampilan JSON\_by\_id](READMEFILES/pasted_image_20250917091020.png)
 
-````
 
 ---
