@@ -296,9 +296,13 @@ def show_product(request, product_id):
     product.last_viewed = timezone.now()
     product.save(update_fields=["last_viewed"])
     return render(request, 'product_detail.html', context)
+
 ```
 
-6. Mengakses keempat URL di poin 2 menggunakan Postman, membuat screenshot dari hasil akses URL pada Postman, dan menambahkannya ke dalam `README.md`.
+6. masukan buat asdos
+Sudah aman kakk, terima kasih untuk bantuan kakak apalagi pas pws bermasalah dan sangat clueless gimana cara solve nya, bantuan kakak sangat membantu dan penjelasan materi sudah sangat baik sehingga sangat mudah paham untuk materinya. terima kasih kakk
+
+7. Mengakses keempat URL di poin 2 menggunakan Postman, membuat screenshot dari hasil akses URL pada Postman, dan menambahkannya ke dalam `README.md`.
 
 ![tampilan web](READMEFILES/pasted_image_20250917090238.png)
 ![tampilan XML](READMEFILES/pasted_image_20250917090436.png)
