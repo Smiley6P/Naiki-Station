@@ -21,4 +21,11 @@
   <p>{{ product.description|truncatewords:25 }}...</p>
   <p>Price: Rp {{ product.price|intcomma }}</p>
 
+  <!-- Ngasih tau siapa yang buat -->
+  {% if product.user %}
+    <p>{{ product.user.username }} Shop</p>
+  {% else %}
+    <p>Shop: Anonymous</p>
+  {% endif %}
+
 {% endblock content %}

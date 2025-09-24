@@ -103,7 +103,8 @@ Menurutku, arahan, tutorial, dan asistensi oleh asisten dosen sudah sangat baik 
 </details>
 
 # Tugas 3
-
+<details>
+<summary>Jawaban</summary>
 1. **Jelaskan mengapa kita memerlukan *data delivery* dalam pengimplementasian sebuah platform?**
 
 Menurut GeeksforGeeks, data delivery penting dalam sebuah platform karena memastikan data yang sudah diproses bisa sampai ke pengguna atau sistem lain untuk analisis, laporan, atau pemrosesan lebih lanjut. Tanpa data delivery yang baik, platform bisa kesulitan memberikan layanan real-time atau sinkronisasi data antar modul, sehingga pengalaman pengguna menurun. Selain itu, data delivery membantu menjaga keamanan dan integritas data dengan kontrol akses, enkripsi, dan audit trail. Singkatnya, data delivery mendukung operasional platform yang lancar dan memastikan keputusan berbasis data bisa dipercaya.
@@ -309,7 +310,28 @@ Sudah aman kakk, terima kasih untuk bantuan kakak apalagi pas pws bermasalah dan
 ![tampilan JSON](READMEFILES/pasted_image_20250917090548.png)
 ![tampilan XML_by_id](READMEFILES/pasted_image_20250917090842.png)
 ![tampilan JSON_by_id](READMEFILES/pasted_image_20250917091020.png)
+</details>
 
+# Tugas 4
+1. Apa itu Django AuthenticationForm? Jelaskan juga kelebihan dan kekurangannya
+[ans]
+`AuthenticationForm` adalah form bawaan Django yang dipakai untuk login. Menerima username dan password dan ngecek apakah dia adalah user valid. 
+Kelebihan:
+Praktis - modul pnp dari django sehingga kita tidak perlu buat form login dari nol lagi. Juga sudah terintegrasi dengan sistem autentikasi Django(authenticate, login). 
+Selain daripada itu, validasi yang sudah built in, membuat semakin praktis karena jika terdapat kesalahan maka akan memunculkan error yang relevan.
+Kekurangan:  
+Bare bone - Bentuk formnya kaku dan polos, styling minim, dan kurang fleksibel. Formnya hanya support login via input username dan password, not available untuk metode login lainnya.
+
+2. Apa perbedaan antara autentikasi dan otorisasi? Bagaiamana Django mengimplementasikan kedua konsep tersebut?
+[ans]
+Autentikasi -> Mengecek dan memastikan bahwa user yang menggunakan account tersebut memang orang yang seharusnya.
+Otorisasi -> Setelah di autentikasi, otorisasi adalah pemberian izin akses terhadap aplikasi tersebut. Misalnya apakah dia bisa mengakses dashboard admin? atau dia hanya user biasa ke landing page doang
+
+Implementasi:
+Autentikasi -> Melalui modul `django.contrib.auth`, kemudian terdapat fungsi `authenticate()` untuk mengecek apakah username dan password cocok atau ngga. Kemudian jika berhasil, maka dipanggil `login()` untuk membuat session jadi user dianggap masuk. 
+Otorisasi -> Django punya model `Permission` dan sistem group. Setiap user bisa dikasih permission (`add`, `change`, `delete`, `view`) untuk model tertentu. dan juga terdapat decorator seperti: `@login_required`, `@permission_required('app_name.permission_code')`, `user.has_perm('app.permission')`, `user.is_staff`, `user.is_superuser`
+
+3. Apa saja kelebihan dan kekurangan session dan cookies dalam konteks menyimpan state di aplikasi web?
 
 
 ---

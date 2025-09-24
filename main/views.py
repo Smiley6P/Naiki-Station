@@ -1,37 +1,59 @@
 from django.utils import timezone
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from .models import Product
 from django.shortcuts import render, redirect, get_object_or_404
 from main.forms import ProductForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+import datetime
+from django.urls import reverse
 
 # from models import Employee
 # from django.http import HttpResponse
 
-
-# Create your views here.
+# Main Page
+@login_required(login_url='/login')
 def show_main(request):
-    Product_list = Product.objects.all()
+    filter_type = request.GET.get("filter", "all")  # default 'all'
+
+    if filter_type == "all":
+        Product_list = Product.objects.all()
+    elif filter_type == "my":
+        Product_list = Product.objects.filter(user=request.user)
+    elif filter_type == "featured":
+        Product_list = Product.objects.filter(is_featured=True)
 
     context = {
         'npm' : '2406403482',
         'name': 'Andrew Sanjay Hasian Panjaitan',
         'class': 'PBP D',
-        'Product_list': Product_list
+        'Product_list': Product_list,
+        'last_login': request.COOKIES.get('last_login', 'Never')
     }
 
     return render(request, "main.html", context)
 
+
+#Form dan Detail Product
+@login_required(login_url='/login')
 def create_product(request):
     form = ProductForm(request.POST or None)
 
-    if form.is_valid():
-        form.save()
+    if form.is_valid()and request.method == 'POST':
+        product_entry = form.save(commit = False)
+        product_entry.user = request.user
+        product_entry.save()
+
         return redirect('main:show_main')
     
     context = {'form': form}
     return render(request, 'create_product.html', context)  
 
+
+@login_required(login_url='/login')
 def show_product(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     context = {'product': product}
@@ -40,6 +62,46 @@ def show_product(request, product_id):
     return render(request, 'product_detail.html', context)
 
 
+
+#Login, logout,register
+def register(request):
+    form = UserCreationForm()
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been successfully created!')
+            return redirect('main:login')
+    context = {'form':form}
+    return render(request, 'register.html', context)
+
+def login_user(request):
+   if request.method == 'POST':
+      form = AuthenticationForm(data=request.POST)
+
+      if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        response = HttpResponseRedirect(reverse("main:show_main"))
+        response.set_cookie('last_login', str(datetime.datetime.now()))
+        return response
+
+   else:
+      form = AuthenticationForm(request)
+   context = {'form': form}
+   return render(request, 'login.html', context)
+
+def logout_user(request):
+    logout(request)
+    response = HttpResponseRedirect(reverse('main:login'))
+    response.delete_cookie('last_login')
+    return response
+
+
+
+
+# API XML dan JSON
 
 def show_xml(request):
      Product_list = Product.objects.all()
@@ -71,3 +133,11 @@ def show_json_by_id(request, product_id):
 #     emp = Employee.objects.create(name="Kak Abhi", age = 19, persona="Sangat Baik")
 
 #     return HttpResponse({emp.name})
+
+# def create_car(request):
+#     form = CarForm(request.POST or None)
+#     if form.is_valid():
+#         form.save()
+#         return redirect('main:show_main')
+#     context = {'form': form}
+#     return render(request, 'car.html', context)

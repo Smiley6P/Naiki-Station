@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
+
 
 # Create your models here.
 class Product(models.Model):
@@ -21,9 +23,11 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_viewed = models.DateTimeField(null=True, blank=True)
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # menambahkan relasi ke model User
 
     def __str__(self):
         return self.name
+    
     
 # class Employee(models.Model):
 #     name = models.CharField(max_length=255)
