@@ -315,23 +315,284 @@ Sudah aman kakk, terima kasih untuk bantuan kakak apalagi pas pws bermasalah dan
 # Tugas 4
 1. Apa itu Django AuthenticationForm? Jelaskan juga kelebihan dan kekurangannya
 [ans]
+
 `AuthenticationForm` adalah form bawaan Django yang dipakai untuk login. Menerima username dan password dan ngecek apakah dia adalah user valid. 
+
 Kelebihan:
 Praktis - modul pnp dari django sehingga kita tidak perlu buat form login dari nol lagi. Juga sudah terintegrasi dengan sistem autentikasi Django(authenticate, login). 
 Selain daripada itu, validasi yang sudah built in, membuat semakin praktis karena jika terdapat kesalahan maka akan memunculkan error yang relevan.
+
 Kekurangan:  
 Bare bone - Bentuk formnya kaku dan polos, styling minim, dan kurang fleksibel. Formnya hanya support login via input username dan password, not available untuk metode login lainnya.
 
 2. Apa perbedaan antara autentikasi dan otorisasi? Bagaiamana Django mengimplementasikan kedua konsep tersebut?
 [ans]
+
 Autentikasi -> Mengecek dan memastikan bahwa user yang menggunakan account tersebut memang orang yang seharusnya.
+
 Otorisasi -> Setelah di autentikasi, otorisasi adalah pemberian izin akses terhadap aplikasi tersebut. Misalnya apakah dia bisa mengakses dashboard admin? atau dia hanya user biasa ke landing page doang
 
 Implementasi:
+
 Autentikasi -> Melalui modul `django.contrib.auth`, kemudian terdapat fungsi `authenticate()` untuk mengecek apakah username dan password cocok atau ngga. Kemudian jika berhasil, maka dipanggil `login()` untuk membuat session jadi user dianggap masuk. 
+
 Otorisasi -> Django punya model `Permission` dan sistem group. Setiap user bisa dikasih permission (`add`, `change`, `delete`, `view`) untuk model tertentu. dan juga terdapat decorator seperti: `@login_required`, `@permission_required('app_name.permission_code')`, `user.has_perm('app.permission')`, `user.is_staff`, `user.is_superuser`
 
 3. Apa saja kelebihan dan kekurangan session dan cookies dalam konteks menyimpan state di aplikasi web?
+[ans]
 
+Session
+
+Kelebihan:
+- lebih aman karena data sensitif disimpan di server, bukan browser
+- Isinya bisa lebih fleksibel dan kompleks, maksudnya, server bisa menyimpan banyak data dan juga bisa menyimpan seperti object, state login, dll
+- Kontrol penuh, developer bisa end/hapus session kapan aja
+
+Kekurangan:
+- Membebani storage server, perlu scaling dan mekanisme expire, agar tidak tertumpuk sampah
+
+cookies
+
+kelebihan:
+- Disimpan di client, sehingga mengurangi beban server
+- Bisa bertahan antar sesi, seperti preferensi untuk darkmode untuk semua sesi
+- Bisa diakses oleh server dan client-side JavaScript
+- Cocok untuk menyimpan data ringan.
+
+Kekurangan:
+- Rentan keamanan
+- Ukurannya sangat terbatas, hanya sekitar 4KB
+- Bisa di hapus manual atau diblok user
+
+
+4. Step-by-Step Implementasi
+a. Implementasi Register, login, logout
+- Pertama dimulai dengan membentuk form registrasi, dengan menambahkan potongan kode berikut di `views.py`
+```python
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+
+def register(request):
+    form = UserCreationForm()
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been successfully created!')
+            return redirect('main:login')
+    context = {'form':form}
+    return render(request, 'register.html', context)
+```
+- Kemudian, kita membuat `register.html` dengan isi
+```html
+<div>
+  <h1>Register</h1>
+
+  <form method="POST">
+    {% csrf_token %}
+    <table>
+      {{ form.as_table }}
+      <tr>
+        <td></td>
+        <td><input type="submit" name="submit" value="Daftar" /></td>
+      </tr>
+    </table>
+  </form>
+
+  {% if messages %}
+  <ul>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+```
+kode tersebut utilize form template yang sudah disediakan oleh Django.
+- kemudian menambahkan `path` di `urls.py`
+```python
+from main.views import register
+
+urlpatterns = [
+    ...
+    path('register/', register, name='register'),
+]
+
+```
+
+- Selanjutnya, saya menambahkan fungsi login dengan menambahkan potongan kode berikut di `views.py`
+```python
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate, login
+
+def login_user(request):
+   if request.method == 'POST':
+      form = AuthenticationForm(data=request.POST)
+
+      if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('main:show_main')
+
+   else:
+      form = AuthenticationForm(request)
+   context = {'form': form}
+   return render(request, 'login.html', context)
+```
+- Kemudian, kita membuat `login.html` dengan isi
+```html
+<div class="login">
+  <h1>Login</h1>
+
+  <form method="POST" action="">
+    {% csrf_token %}
+    <table>
+      {{ form.as_table }}
+      <tr>
+        <td></td>
+        <td><input class="btn login_btn" type="submit" value="Login" /></td>
+      </tr>
+    </table>
+  </form>
+
+  {% if messages %}
+  <ul>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %} Don't have an account yet?
+  <a href="{% url 'main:register' %}">Register Now</a>
+</div>
+```
+- kemudian menambahkan `path` di `urls.py`
+```python
+from main.views import login_user
+
+
+urlpatterns = [
+    ...
+    path('login/', login_user, name='login'),
+]
+
+```
+- Terakhir, menambahkan fungssi logout di `views.py` dengan menambahkan:
+```python
+from django.contrib.auth import authenticate, login, logout
+
+def logout_user(request):
+    logout(request)
+    return redirect('main:login')
+```
+
+Kemudian, kembali ke `main.html` dan menambahkan potongan kode ini setelah tombol add_product:
+```html
+{% url 'main:logout' as logout_url %}
+<button onclick="location.href='{{ logout_url }}'">Logout</button>
+```
+
+- - kemudian menambahkan `path` di `urls.py`
+```python
+from main.views import logout_user
+
+urlpatterns = [
+    ...
+    path('logout/', logout_user, name='logout'),
+]
+
+```
+
+b. Membuat dua (2) akun pengguna dengan masing-masing tiga (3) dummy data menggunakan model yang telah dibuat sebelumnya untuk setiap akun di lokal.
+- pertama-tama melakukan register, dengan memencet `Register Now`
+![tampilan web login](READMEFILES/tugas4-1.png)
+
+- Kemudian melakukan registrasi username dan password mengikuti dengan ketentuan yang ada. 
+![tampilan web registrasi](READMEFILES/tugas4-2.png)
+
+- Login sekali lagi dengan username dan password yang sudah dibuat
+![tampilan web utama](READMEFILES/tugas4-3.png)
+
+- Memencet add product untuk diredirect ke form product
+![tampilan web add product](READMEFILES/tugas4-4.png)
+
+- Melakukan pengisian data untuk produk berdasarkan atribut-atribut yang diminta seperti, nama, harga, deskripsi, dan lain-lain.
+![tampilan web form add product](READMEFILES/tugas4-5.png)
+Repeat this step 3x
+
+- View product-product akun tersebut yang sudah dicreate
+![tampilan web product catalog](READMEFILES/tugas4-6.png)
+
+- logout
+
+- Kemudian redo steps ini sekali lagi untuk create akun yang kedua
+
+c. Menghubungkan model Product dengan User
+- Untuk menghubungkan model Product dengan user, simply dengan menambahkan di class `Product` di `models.py`:
+```python
+from django.contrib.auth.models import User
+
+class Product(models.Model):
+    ...
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) 
+    ...
+```
+- Lakukan kedua perintah migrate dibawah:
+```cmd
+python manage.py makemigrations
+python manage.py migrate
+```
+- Mengubah fungsi `create_product` di `views.py`:
+```python
+def create_product(request):
+    form = ProductForm(request.POST or None)
+
+    if form.is_valid()and request.method == 'POST':
+        product_entry = form.save(commit = False)
+        product_entry.user = request.user
+        product_entry.save()
+
+        return redirect('main:show_main')
+    
+    context = {'form': form}
+    return render(request, 'create_product.html', context)  
+```
+- Kemudian, update fungsi `show_main` di `views.py` menjadi:
+```python
+def show_main(request):
+    filter_type = request.GET.get("filter", "all")  # default 'all'
+
+    if filter_type == "all":
+        Product_list = Product.objects.all()
+    elif filter_type == "my":
+        Product_list = Product.objects.filter(user=request.user)
+    elif filter_type == "featured":
+        Product_list = Product.objects.filter(is_featured=True)
+
+    context = {
+        'npm' : '2406403482',
+        'name': 'Andrew Sanjay Hasian Panjaitan',
+        'class': 'PBP D',
+        'Product_list': Product_list,
+        'last_login': request.COOKIES.get('last_login', 'Never')
+    }
+
+    return render(request, "main.html", context)
+```
+
+d.  Menampilkan detail informasi pengguna yang sedang logged in seperti username dan menerapkan cookies seperti last_login pada halaman utama aplikasi.
+
+- Mengubah dan menambahkan hal tersebut di `main.html` di bagian atas sebelum product list dan setelah judul utama Naiki Station:
+```html 
+...
+<H4>Welcome, {{ user.username|title }}! Glad you're here.</H4>
+...
+<h5>Sesi terakhir login: {{ last_login }}</h5>
+...
+```
+
+- Tampilan:
+![tampilan web utama](READMEFILES/tugas4-7.png)
 
 ---
