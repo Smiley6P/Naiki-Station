@@ -5,7 +5,7 @@
 <h5 class="last-viewed">{{name}} - {{class}}</h5>
 
 <div class="profile-card">
-  <H4>Welcome, {{ user.username|title }}! Glad you're here.</H4>
+  <H4>Welcome, {{ loggedin_user|title }}! Glad you're here.</H4>
 
   <!-- buat ngesolve kayak ada garis diantara kedua tombol (berkaitan dengan <a><button> </button><a>) -->
   {% url 'main:create_product' as create_product_url %}

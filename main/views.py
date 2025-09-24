@@ -30,6 +30,8 @@ def show_main(request):
         'npm' : '2406403482',
         'name': 'Andrew Sanjay Hasian Panjaitan',
         'class': 'PBP D',
+
+        'loggedin_user': request.user.username,
         'Product_list': Product_list,
         'last_login': request.COOKIES.get('last_login', 'Never')
     }
