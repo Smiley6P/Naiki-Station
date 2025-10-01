@@ -312,6 +312,7 @@ Sudah aman kakk, terima kasih untuk bantuan kakak apalagi pas pws bermasalah dan
 ![tampilan JSON_by_id](READMEFILES/pasted_image_20250917091020.png)
 </details>
 
+<details> <summary>Jawaban</summary>
 # Tugas 4
 1. Apa itu Django AuthenticationForm? Jelaskan juga kelebihan dan kekurangannya
 [ans]
@@ -594,5 +595,199 @@ d.  Menampilkan detail informasi pengguna yang sedang logged in seperti username
 
 - Tampilan:
 ![tampilan web utama](READMEFILES/tugas4-7.png)
+</details>
+
+
+# Tugas 5
+1. Jika terdapat beberapa CSS selector untuk suatu elemen HTML, jelaskan urutan prioritas pengambilan CSS selector tersebut!
+[ans]
+
+Urutan prioritas CSS ditentukan oleh specificity, di mana aturan dengan tingkat kekuatan lebih tinggi akan diterapkan. Paling kuat adalah **inline style** (misalnya <p style="color:red">)  yang ditulis langsung pada elemen HTML, diikuti oleh **ID selector**(#id), lalu **class selector**, **attribute selector**, dan **pseudo-class**(seperti .class, [type="text"], atau :hover), kemudian yang paling lemah adalah element selector serta pseudo-element. Jika ada dua aturan dengan tingkat prioritas sama, maka yang dipakai adalah aturan yang ditulis terakhir di stylesheet. Selain itu, deklarasi `!important` akan mengalahkan semua aturan lain, kecuali ada `!important` lain dengan tingkat specificity lebih tinggi.
+
+2. Mengapa responsive design menjadi konsep yang penting dalam pengembangan aplikasi web? Berikan contoh aplikasi yang sudah dan belum menerapkan responsive design, serta jelaskan mengapa!
+[ans]
+
+Responsive design penting karena memastikan tampilan dan fungsi aplikasi web bisa menyesuaikan berbagai ukuran layar, mulai dari desktop, tablet, hingga smartphone. Jika tidak ada design responsive maka akan mengurangi user experience karna user harus adjust sendiri seperti harus melakukan zoom atau scroll berlebihan, sehingga aksesibilitas dan kepuasan pengguna mengurang. Contoh aplikasi yang sudah menerapkan responsive design adalah Instagram, dimana menu fitur seperti search, explore, dan sebagainya berada di kiri, kemudian pas dibuat sebagai format henpon dia berpindah ke bawah. Sebaliknya, beberapa website pemerintah lama (misalnya versi awal situs KPU atau layanan daerah) sering belum responsive, sehingga saat dibuka di HP tampilannya rusak, teks terlalu kecil, tombol sulit ditekan, dan navigasi menjadi rumit.
+
+3. Jelaskan perbedaan antara margin, border, dan padding, serta cara untuk mengimplementasikan ketiga hal tersebut!
+[ans]
+
+Margin adalah jarak di luar elemen, digunakan untuk memberi ruang antar elemen agar tidak saling menempel. Border adalah garis yang mengelilingi elemen, berada di antara margin dan padding, dan bisa diberi warna, ketebalan, atau gaya. Padding adalah jarak di dalam elemen, yaitu ruang antara konten (seperti teks atau gambar) dengan border.
+
+Untuk implementasinya, ketiganya bisa digunakan dengan properti CSS:
+
+```html
+div {
+  margin: 20px;           /* memberi jarak luar antar elemen */
+  border: 2px solid black;/* memberi garis tepi hitam dengan ketebalan 2px */
+  padding: 10px;          /* memberi jarak antara konten dan border */
+}
+```
+div tersebut akan punya jarak 20px dari elemen lain (margin), dikelilingi garis hitam 2px (border), dan isi teks/gambarnya punya ruang kosong 10px dari garis tersebut (padding).
+
+contoh:
+![CSS Box Model](READMEFILES/tugas5-1.png)
+[taken from https://medium.com/codex/css-box-model-4785e0ef5b64]
+
+
+4. Jelaskan konsep flex box dan grid layout beserta kegunaannya!
+[ans]
+
+Flexbox (Flexible Box Layout) berfungsi untuk mengatur elemen dalam satu dimensi, yaitu baris (row) atau kolom (column). Dengan flexbox, developer bisa dengan mudah membuat elemen otomatis menyesuaikan ukuran ruang, rata kiri/kanan/tengah, atau mendistribusikan jarak antar elemen. Flexbox cocok dipakai untuk navbar, tombol, kartu produk, atau layout sederhana yang hanya perlu pengaturan satu arah.Misalnya, 
+```css
+.container {
+  display: flex;
+  justify-content: space-between; /* spasi rata */
+  align-items: center;            /* rata tengah vertikal */
+}
+```
+
+Grid Layout, sebaliknya, berfungsi untuk mengatur elemen dalam dua dimensi (baris dan kolom) secara bersamaan. Dengan grid, kita bisa membuat desain halaman yang kompleks seperti tata letak majalah atau dashboard, karena setiap elemen bisa ditempatkan secara presisi pada baris dan kolom tertentu. Grid sangat berguna untuk layout utama halaman web, galeri foto, atau dashboard admin yang membutuhkan struktur rapi di dua arah. Misalnya:
+```css
+.container {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* tiga kolom */
+  grid-template-rows: auto auto;      /* dua baris otomatis */
+  gap: 20px;
+}
+```
+
+contoh:
+![flexbox grid layout](READMEFILES/tugas5-2.png)
+[taken from https://ishadeed.com/article/grid-layout-flexbox-components/]
+
+
+5. implementasi checkbox step by step:
+- Implementasikan fungsi untuk menghapus dan mengedit product
+di `views.py` tambahkan 2 fungsi:
+```python
+login_required(login_url='/login')
+def edit_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    if product.user != request.user:   # forbid non-owners
+        return HttpResponse("You are not allowed to edit this product.", status=403)
+
+    form = ProductForm(request.POST or None, instance=product)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('main:show_main')
+
+    context = {'form': form}
+    return render(request, "edit_product.html", context)
+
+
+@login_required(login_url='/login')
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    if product.user != request.user:
+        return HttpResponse("You are not allowed to delete this product.", status=403)
+
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
+```
+
+terus buat file template `edit_product.html`
+```html
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<h1>Edit News</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+        <tr>
+            <td></td>
+            <td>
+                <input type="submit" value="Edit News"/>
+            </td>
+        </tr>
+    </table>
+</form>
+
+{% endblock %}
+```
+
+terus buka `urls.py` yang berada pada direktori `main` dan import fungsi `edit_news` yang sudah dibuat.
+```python
+from main.views import edit_news
+from main.views import delete_news
+```
+
+Tambahkan path url ke dalam `urlpatterns` untuk mengakses fungsi yang sudah diimpor tadi.
+```python
+...
+path('news/<uuid:id>/edit', edit_news, name='edit_news'),
+path('news/<uuid:id>/delete', delete_news, name='delete_news'),
+...
+```
+
+Kemudian tambahin ke bagian bawah tiap product di `main.html`
+```html
+{% if user.is_authenticated and product.user == user %}
+<div class="flex space-x-4 p-6">
+    <a href="{% url 'main:edit_product' product.id %}">
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Edit
+        </button>
+    </a>
+    <form action="{% url 'main:delete_product' product.id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Delete
+        </button>
+    </form>
+</div>
+{% endif %}
+
+```
+- Kustomisasi desain pada template HTML yang telah dibuat pada tugas-tugas sebelumnya menggunakan CSS atau CSS framework (seperti Bootstrap, Tailwind, Bulma)
+
+akses `base.html` di `main/templates/base.html` dan ubah bagian `<head>` untuk import Tailwind:
+```html
+<head>
+{% block meta %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% endblock meta %}
+<script src="https://cdn.tailwindcss.com">
+<link rel="stylesheet" href="{% static 'css/global.css' %}"/>
+</script>
+</head>
+```
+
+modifikasi di `login, register, tambah product, edit product, dan detail product` secara berurutan :
+
+[karena kalau menyertakan kode akan kepanjangan, maka akan memberikan screenshot, sedangkan source code bisa dilihat di directory main/templates]
+
+![halaman login](READMEFILES/tugas5-3.png)
+![halaman register](READMEFILES/tugas5-4.png)
+![halaman create_product](READMEFILES/tugas5-5.png)
+![halaman product_detail](READMEFILES/tugas5-6.png)
+
+
+halaman daftar produk:
+![halaman main_page](READMEFILES/tugas5-7.png)
+
+Untuk tombol edit delete saya pindahkan ke `product_detail.html` demi alasan estetika sehingga tampilan di main page hanya seperti di bagian halaman daftar produk, dan tombolnya tertera pada halaman `product_detail` diatas
+
+Terakhir membuat navbar
+
+[kode di git]
+
+**Tampilan Dekstop**
+![halaman main_page dekstop](READMEFILES/tugas5-7.png)
+
+**Tampilan Mobile**
+- biasa
+![halaman main_page mobile](READMEFILES/tugas5-8.png)
+- hamburger
+![halaman main_page mobile hamburger](READMEFILES/tugas5-9.png)
+
 
 ---

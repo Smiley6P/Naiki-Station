@@ -1,74 +1,60 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load static %}
+
+{% block meta %}
+<title>Naiki Station</title>
+{% endblock meta %}
 {% block content %}
-<h1>Naiki Station</h1>
-<h5 class="last-viewed">{{name}} - {{class}}</h5>
 
-<div class="profile-card">
-  <H4>Welcome, {{ loggedin_user|title }}! Glad you're here.</H4>
+{% include 'navbar.html' %}
+<div class="bg-gray-50 w-full pt-16 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <!-- buat ngesolve kayak ada garis diantara kedua tombol (berkaitan dengan <a><button> </button><a>) -->
-  {% url 'main:create_product' as create_product_url %}
-  {% url 'main:logout' as logout_url %}
-  <button onclick="location.href='{{ create_product_url }}'">+ Add Product</button>
-  <button onclick="location.href='{{ logout_url }}'">Logout</button>
-  <h5>Sesi terakhir login: {{ last_login }}</h5>
+    <!-- Header Section -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Latest Naiki Station Product</h1>
+      <p class="text-gray-600">Stay updated with the newest Naiki Station Product and Promos</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 bg-white rounded-lg border border-gray-200 p-4">
+      <div class="flex space-x-3 mb-4 sm:mb-0">
+        <a href="?" class="{% if request.GET.filter == 'all' or not request.GET.filter  %} bg-green-600 text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-green-600 hover:text-white">
+          All product
+        </a>
+        <a href="?filter=my" class="{% if request.GET.filter == 'my' %} bg-green-600 text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-green-600 hover:text-white">
+          My product
+        </a>
+        <a href="?filter=featured" class="{% if request.GET.filter == 'featured' %} bg-green-600 text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-green-600 hover:text-white">
+          Featured product
+        </a>
+      </div>
+      {% if user.is_authenticated %}
+        <div class="text-sm text-gray-500">
+          Last login: {{ last_login }}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- product Grid -->
+    {% if not product_list %}
+      <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+        <div class="w-32 h-32 mx-auto mb-4">
+          <img src="{% static 'image/no-product.png' %}" alt="No product available" class="w-full h-full object-contain">
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No product is registered, yet.</h3>
+        <p class="text-gray-500 mb-6">Be the first to Sell your Product(s) in Naiki Station.</p>
+        <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+          Create product
+        </a>
+      </div>
+    {% else %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+       {% for product in product_list %}
+         {% include 'card_product.html' with product=product %}
+       {% endfor %}
+      </div>
+    {% endif %}
+  </div>
 </div>
-
-<hr>
-
-<!-- kode buat kategori -->
-<button type="button" onclick="location.href='?filter=all'">All Products</button>
-<button type="button" onclick="location.href='?filter=my'">My Products</button>
-<button type="button" onclick="location.href='?filter=featured'">Featured Products</button>
-
-{% if not Product_list %}
-<p>Belum ada data Produk di Naiki Station.</p>
-{% else %}
-<h3>Catalog Product Naiki Station</h3>
-{% for product in Product_list %}
-<div class="product-card">
-  <h2><a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a></h2>
-  <!-- Ngasih tau siapa yang buat -->
-  {% if product.user %}
-    <p>by: <a href="/shop/{{ product.user.id }}" class="badge bg-primary"> <!-- TODO: buat /Shop/product.user.id -->
-    {{ product.user.username }}
-    </a></p>
-    
-
-  {% else %}
-    <p class="text-muted">by Anonymous</p> 
-    
-  {% endif %}
-
-  <p class="product-meta">
-    <b>{{ product.get_category_display }}</b>
-    {% if product.is_featured %} | <b>Featured</b>{% endif %}
-    | <i>{{ product.created_at|naturaltime }}</i>
-  </p>
-
-
-  {% if product.thumbnail %}
-    <img src="{{ product.thumbnail }}" alt="thumbnail" width="150" height="100">
-    <br />
-  {% endif %}
-
-  <p>{{ product.description|truncatewords:25 }}...</p>
-  <p>Price: Rp {{ product.price|intcomma }}</p>
-
-  <p><a href="{% url 'main:show_product' product.id %}"><button>Detail</button></a></p>
-  <p class="last-viewed">Last viewed:
-   {% if product.last_viewed %}
-      {{ product.last_viewed|timesince }} ago
-   {% else %}
-      Never viewed
-   {% endif %}
-  </p>
-</div>
-
-<hr>
-{% endfor %}
-
-{% endif %}
-
 {% endblock content %}

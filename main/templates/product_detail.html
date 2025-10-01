@@ -1,31 +1,99 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load humanize %}
 
+{% block meta %}
+<title>{{ product.name }} - Naiki Station</title>
+{% endblock meta %}
+
 {% block content %}
-<p><a href="{% url 'main:show_main' %}"><button>← Back to Product List</button></a></p>
+<div class="bg-gray-50 w-full min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Back Navigation -->
+        <div class="mb-6">
+            <a href="{% url 'main:show_main' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                ← Back to product
+            </a>
+        </div>
+        
+        <!-- Article -->
+        <article class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            
+            <!-- Header -->
+            <div class="p-6 sm:p-8">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-600 text-white">
+                        {{ product.get_category_display }}
+                    </span>
+                    {% if product.is_featured %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Featured
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+                    {{ product.title }}
+                </h1>
+                
+                <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4">
+                    <time datetime="{{ product.created_at|date:'c' }}">
+                      created : {{ product.created_at|naturaltime }}
+                    </time>
+                    <span>|  Last viewed: {{ product.last_viewed }} </span>
+                </div>
+            </div>
 
-<div class="product-card">
-  <h2><a href="{% url 'main:show_product' product.id %}">{{ product.name }}</a></h2>
+            <!-- Featured Image -->
+            {% if product.thumbnail %}
+                <div class="px-6 sm:px-8">
+                    <img src="{{ product.thumbnail }}" 
+                         alt="{{ product.title }}" 
+                         class="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-lg">
+                </div>
+            {% endif %}
 
-  <p class="product-meta">
-    <b>{{ product.get_category_display }}</b>
-    {% if product.is_featured %} | <b>Featured</b>{% endif %}
-    | <i>{{ product.created_at|naturaltime }}</i>
-  </p>
+            <!-- Content -->
+            <div class="p-6 sm:p-8">
+                <div class="prose prose-lg max-w-none">
+                    <div class="text-gray-700 leading-relaxed whitespace-pre-line text-base sm:text-lg">
+                        {{ product.description }}
+                    </div>
+                </div>
+            </div>
 
-  {% if product.thumbnail %}
-    <img src="{{ product.thumbnail }}" alt="thumbnail" width="150" height="100">
-    <br />
-  {% endif %}
-
-  <p>{{ product.description|truncatewords:25 }}...</p>
-  <p>Price: Rp {{ product.price|intcomma }}</p>
-
-  <!-- Ngasih tau siapa yang buat -->
-  {% if product.user %}
-    <p>{{ product.user.username }} Shop</p>
-  {% else %}
-    <p>Shop: Anonymous</p>
-  {% endif %}
-
+            <!-- Seller Info -->
+            <div class="border-t border-gray-200 p-6 sm:p-8 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-medium text-gray-900">
+                            {% if product.user %}
+                                <p>Product of: {{ product.user.username }}</p>
+                            {% else %}
+                                <p>Product of: Anonymous</p>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500">Shop</p>
+                    </div>
+                </div>
+            </div>
+            {% if user.is_authenticated and product.user == user %}
+            <div class="flex space-x-4 p-6">
+                <a href="{% url 'main:edit_product' product.id %}">
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Edit
+                    </button>
+                </a>
+                <form action="{% url 'main:delete_product' product.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Delete
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </article>
+    </div>
+</div>
 {% endblock content %}

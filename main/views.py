@@ -28,11 +28,11 @@ def show_main(request):
 
     context = {
         'npm' : '2406403482',
-        'name': 'Andrew Sanjay Hasian Panjaitan',
+        'name': request.user.username,
         'class': 'PBP D',
 
         'loggedin_user': request.user.username,
-        'Product_list': Product_list,
+        'product_list': Product_list,
         'last_login': request.COOKIES.get('last_login', 'Never')
     }
 
@@ -63,6 +63,29 @@ def show_product(request, product_id):
     product.save(update_fields=["last_viewed"])  
     return render(request, 'product_detail.html', context)
 
+@login_required(login_url='/login')
+def edit_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    if product.user != request.user:   # forbid non-owners
+        return HttpResponse("You are not allowed to edit this product.", status=403)
+
+    form = ProductForm(request.POST or None, instance=product)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('main:show_main')
+
+    context = {'form': form}
+    return render(request, "edit_product.html", context)
+
+
+@login_required(login_url='/login')
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    if product.user != request.user:
+        return HttpResponse("You are not allowed to delete this product.", status=403)
+
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
 
 
 #Login, logout,register
