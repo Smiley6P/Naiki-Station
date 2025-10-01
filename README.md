@@ -312,8 +312,9 @@ Sudah aman kakk, terima kasih untuk bantuan kakak apalagi pas pws bermasalah dan
 ![tampilan JSON_by_id](READMEFILES/pasted_image_20250917091020.png)
 </details>
 
-<details> <summary>Jawaban</summary>
 # Tugas 4
+<details> <summary>Jawaban</summary>
+
 1. Apa itu Django AuthenticationForm? Jelaskan juga kelebihan dan kekurangannya
 [ans]
 
