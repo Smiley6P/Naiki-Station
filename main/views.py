@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.core import serializers
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from .models import Product
 from django.shortcuts import render, redirect, get_object_or_404
 from main.forms import ProductForm
@@ -24,7 +24,7 @@ def show_main(request):
     elif filter_type == "my":
         Product_list = Product.objects.filter(user=request.user)
     elif filter_type == "featured":
-        Product_list = Product.objects.filter(is_featured=True)
+            Product_list = Product.objects.filter(is_featured=True)
 
     context = {
         'npm' : '2406403482',
@@ -134,9 +134,24 @@ def show_xml(request):
      return HttpResponse(xml_data, content_type="application/xml")
 
 def show_json(request):
-    Product_list = Product.objects.all()
-    json_data = serializers.serialize("json", Product_list)
-    return HttpResponse(json_data, content_type="application/json")
+    product_list = Product.objects.all()
+    data = [
+        {
+            'id': str(product.id),
+            'name': product.name,
+            'price': product.price,
+            'description': product.description,
+            'category': product.category,
+            'thumbnail': product.thumbnail,
+            'is_featured': product.is_featured,
+            'created_at': product.created_at.isoformat(),
+            'last_viewed': product.last_viewed.isoformat() if product.last_viewed else None,
+            'user': product.user.username if product.user else 'Anonymous',
+        }
+        for product in product_list  
+    ]
+
+    return JsonResponse(data, safe=False)
 
 def show_xml_by_id(request, product_id):
    try:
