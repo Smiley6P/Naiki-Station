@@ -39,7 +39,7 @@
         </div>
       {% endif %}
 
-      <form method="POST" action="" class="space-y-5">
+      <form id="register-form" method="POST" action="" class="space-y-5">
         {% csrf_token %}
         
         <div>
@@ -80,7 +80,52 @@
           class="w-full bg-green-600 text-white font-medium py-3 px-4 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
           Create Account
         </button>
+        <div id="register-error" class="text-red-600 text-sm hidden"></div>
       </form>
+
+      <script>
+        (function(){
+          function getCsrfToken(){
+            const m = document.cookie.match(/(^| )csrftoken=([^;]+)/);
+            return m ? m[2] : '';
+          }
+          const form = document.getElementById('register-form');
+          if (!form) return;
+          form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+            const err = document.getElementById('register-error'); if (err) { err.classList.add('hidden'); err.textContent=''; }
+            const payload = {
+              username: form.elements['username'].value,
+              password1: form.elements['password1'].value,
+              password2: form.elements['password2'].value
+            };
+            const resp = await fetch("{% url 'main:api_auth_register' %}", {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+              credentials: 'same-origin',
+              body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              if (window.showToast) showToast('Success', 'Account created', 'success', 1200);
+              window.location.href = data.redirect || "{% url 'main:login' %}";
+              return;
+            }
+            const data = await resp.json().catch(()=>({}));
+            if (err) {
+              const parts = [];
+              if (data && data.errors) {
+                Object.entries(data.errors).forEach(([k,v]) => parts.push(`${k}: ${(v||[]).map(x=>x.message||x).join(', ')}`));
+              }
+              err.textContent = parts.join('; ') || 'Registration failed';
+              err.classList.remove('hidden');
+            }
+            if (btn) btn.disabled = false;
+          });
+        })();
+      </script>
+
 
       <!-- Messages Display -->
       {% if messages %}

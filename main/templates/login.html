@@ -38,7 +38,7 @@
         </div>
       {% endif %}
 
-      <form method="POST" action="" class="space-y-6">
+      <form id="login-form" method="POST" action="" class="space-y-6">
         {% csrf_token %}
         
         <div>
@@ -68,7 +68,50 @@
           class="w-full bg-green-600 text-white font-medium py-3 px-4 rounded-md hover:bg-green-700 transition-colors">
           Sign In
         </button>
+        <div id="login-error" class="text-red-600 text-sm hidden"></div>
       </form>
+      <script>
+        (function(){
+          function getCsrfToken(){
+            const m = document.cookie.match(/(^| )csrftoken=([^;]+)/);
+            return m ? m[2] : '';
+          }
+          const form = document.getElementById('login-form');
+          if (!form) return;
+          form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+            const err = document.getElementById('login-error'); if (err) { err.classList.add('hidden'); err.textContent=''; }
+            const payload = {
+              username: form.elements['username'].value,
+              password: form.elements['password'].value
+            };
+            const resp = await fetch("{% url 'main:api_auth_login' %}", {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+              credentials: 'same-origin',
+              body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              if (window.showToast) showToast('Success', 'Logged in', 'success', 1200);
+              window.location.href = data.redirect || "{% url 'main:show_main' %}";
+              return;
+            }
+            const data = await resp.json().catch(()=>({}));
+            if (err) {
+              const parts = [];
+              if (data && data.errors) {
+                Object.entries(data.errors).forEach(([k,v]) => parts.push(`${k}: ${(v||[]).map(x=>x.message||x).join(', ')}`));
+              }
+              err.textContent = parts.join('; ') || 'Login failed';
+              err.classList.remove('hidden');
+            }
+            if (btn) btn.disabled = false;
+          });
+        })();
+      </script>
+
 
       <!-- Messages Display -->
       {% if messages %}
@@ -90,6 +133,7 @@
           {% endfor %}
         </div>
       {% endif %}
+    
 
       <div class="mt-6 text-center pt-6 border-t border-gray-200">
         <p class="text-gray-500 text-sm">

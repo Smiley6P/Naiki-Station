@@ -94,39 +94,42 @@ def delete_product(request, id):
 
 
 #Login, logout,register
+# replaces your register() entirely
 def register(request):
-    form = UserCreationForm()
-
-    if request.method == "POST":
+    if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Your account has been successfully created!')
+            messages.success(request, "Account created. Please log in.")
             return redirect('main:login')
-    context = {'form':form}
-    return render(request, 'register.html', context)
+        messages.error(request, "Registration failed. Please fix the errors.")
+    else:
+        form = UserCreationForm()
+    return render(request, 'register.html', {'form': form})
 
+
+# replaces your login_user() entirely
 def login_user(request):
-   if request.method == 'POST':
-      form = AuthenticationForm(data=request.POST)
-
-      if form.is_valid():
-        user = form.get_user()
-        login(request, user)
-        response = HttpResponseRedirect(reverse("main:show_main"))
-        response.set_cookie('last_login', str(datetime.datetime.now()))
-        return response
-
-   else:
-      form = AuthenticationForm(request)
-   context = {'form': form}
-   return render(request, 'login.html', context)
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.username}!")
+            resp = redirect('main:show_main')  # message persists across redirect
+            resp.set_cookie('last_login', str(datetime.datetime.now()))
+            return resp
+        messages.error(request, "Invalid username or password.")
+    else:
+        form = AuthenticationForm(request)
+    return render(request, 'login.html', {'form': form})
 
 def logout_user(request):
     logout(request)
-    response = HttpResponseRedirect(reverse('main:login'))
-    response.delete_cookie('last_login')
-    return response
+    messages.info(request, "You have been logged out.")
+    resp = redirect('main:login')
+    resp.delete_cookie('last_login')
+    return resp
 
 
 
@@ -282,3 +285,45 @@ def categories_api(request):
     except Exception:
         pass
     return JsonResponse({"ok": True, "data": cats}, status=200)
+
+
+@require_http_methods(["POST"])
+def api_auth_login(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"ok": False, "error": "bad_json"}, status=400)
+
+    form = AuthenticationForm(request, data={"username": data.get("username",""), "password": data.get("password","")})
+    if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        messages.success(request, f"Welcome back, {user.username}!")
+        return JsonResponse({"ok": True, "redirect": reverse("main:show_main")}, status=200)
+
+    return JsonResponse({
+        "ok": False,
+        "errors": form.errors.get_json_data()
+    }, status=400)
+
+@require_http_methods(["POST"])
+def api_auth_register(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"ok": False, "error": "bad_json"}, status=400)
+
+    form = UserCreationForm(data={
+        "username": data.get("username",""),
+        "password1": data.get("password1",""),
+        "password2": data.get("password2","")
+    })
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Account created. Please log in.")
+        return JsonResponse({"ok": True, "redirect": reverse("main:login")}, status=201)
+
+    return JsonResponse({
+        "ok": False,
+        "errors": form.errors.get_json_data()
+    }, status=400)

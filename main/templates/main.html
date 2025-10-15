@@ -44,35 +44,28 @@
       {% endif %}
     </div>
 
-        <!-- States -->
+    <!-- States -->
     <div id="state-loading" class="hidden text-gray-500">Loading…</div>
     <div id="state-error" class="hidden text-red-600">Something went wrong.</div>
-    <div id="state-empty" class="hidden text-gray-500">No products yet.</div>
 
-    <!-- AJAX grid-->
-    <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 hidden"></div>
-
-    <!-- Server-rendered fallback (will be hidden when AJAX is active) -->
-    <div id="server-grid-wrapper">
-      {% if not product_list %}
-        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div class="w-32 h-32 mx-auto mb-4">
-            <img src="{% static 'image/no-product.png' %}" alt="No product available" class="w-full h-full object-contain">
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No product is registered, yet.</h3>
-          <p class="text-gray-500 mb-6">Be the first to Sell your Product(s) in Naiki Station.</p>
-          <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-            Create product
-          </a>
+    <!-- Rich empty state (hidden by default, JS will toggle it) -->
+    <div id="state-empty" class="hidden">
+      <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+        <div class="w-32 h-32 mx-auto mb-4">
+          <img src="{% static 'image/no-product.png' %}" alt="No product available" class="w-full h-full object-contain">
         </div>
-      {% else %}
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {% for product in product_list %}
-            {% include 'card_product.html' with product=product %}
-          {% endfor %}
-        </div>
-      {% endif %}
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No product is registered, yet.</h3>
+        <p class="text-gray-500 mb-6">Be the first to Sell your Product(s) in Naiki Station.</p>
+        <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+          Create product
+        </a>
+      </div>
     </div>
+
+    <!-- AJAX grid only -->
+    <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+  </div>
+</div>
 
 
 <!-- Overlay + Modals -->
@@ -88,10 +81,10 @@
       <textarea name="description" placeholder="Description" class="w-full border rounded p-2"></textarea>
       <label class="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox"> Featured</label>
       <div id="create-error" class="text-red-600 text-sm hidden"></div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" data-close class="px-3 py-2 rounded border">Cancel</button>
-        <button type="submit" class="px-4 py-2 rounded bg-green-600 text-white">Save</button>
-      </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" data-close class="px-3 py-2 rounded border">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-green-600 text-white">Save</button>
+        </div>
     </form>
   </div>
 

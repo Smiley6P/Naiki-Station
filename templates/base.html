@@ -6,16 +6,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 {% endblock meta %}
-<script src="https://cdn.tailwindcss.com">
-<link rel="stylesheet" href="{% static 'css/global.css' %}"/>
-</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="{% static 'css/global.css' %}">
 </head>
 
 <body>
     {% block content %} {% endblock content %}
     
     {% include 'toast.html' %}
-
-    
+    {% if messages %}
+    <script>
+      window.__djangoMsgs = window.__djangoMsgs || [];
+    </script>
+    {% for message in messages %}
+    <script>
+      window.__djangoMsgs.push({
+        level: "{{ message.tags|default:'info' }}",
+        text: "{{ message.message|escapejs }}"
+      });
+    </script>
+    {% endfor %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!window.showToast) return;
+        (window.__djangoMsgs || []).forEach(function(m){
+          var title = m.level === 'success' ? 'Success'
+                   : m.level === 'warning' ? 'Warning'
+                   : m.level === 'error'   ? 'Error'   : 'Info';
+          showToast(title, m.text, m.level, 2500);
+        });
+      });
+    </script>
+    {% endif %}
 </body>
 </html>

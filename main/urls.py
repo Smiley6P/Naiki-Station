@@ -1,6 +1,6 @@
 from django.urls import path
 from main.views import show_main, create_product, show_product, edit_product, delete_product,\
-    show_products_api, product_detail_api, categories_api,\
+    show_products_api, product_detail_api, categories_api, api_auth_login, api_auth_register,\
     register, login_user, logout_user,\
     show_xml, show_json, show_xml_by_id, show_json_by_id
 
@@ -18,6 +18,10 @@ urlpatterns = [
     path('api/products/', show_products_api, name='show_products_api'),             
     path('api/products/<uuid:id>/', product_detail_api, name='product_detail_api'), 
     path('api/categories/', categories_api, name='categories_api'),
+
+    # auth (AJAX)
+    path('api/auth/login/', api_auth_login, name='api_auth_login'),
+    path('api/auth/register/', api_auth_register, name='api_auth_register'),
 
     path('register/', register, name='register'),
     path('login/', login_user, name='login'),
