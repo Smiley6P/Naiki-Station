@@ -1,6 +1,8 @@
-// place in: main/static/main/js/products.js
-
 (function(){
+  let currentEditId = null;
+  let currentDeleteId = null;
+  let CATEGORIES = [];
+
   function getQueryFilter() {
     try { return new URL(window.location.href).searchParams.get('filter') || 'all'; }
     catch(_) { return 'all'; }
@@ -15,6 +17,31 @@
       const el = document.getElementById(which);
       if (el) el.classList.remove('hidden');
     }
+  }
+
+  function ensureCategoryOptions() {
+    const fill = (sel) => {
+      if (!sel) return;
+      sel.innerHTML = '';
+      CATEGORIES.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+    };
+    fill(document.getElementById('create-category'));
+    fill(document.getElementById('update-category'));
+  }
+
+  async function loadCategories() {
+    try {
+      const resp = await fetch('/api/categories/', { credentials: 'same-origin' });
+      if (!resp.ok) throw 0;
+      const json = await resp.json();
+      CATEGORIES = (json && json.data) || [];
+    } catch { CATEGORIES = []; }
+    ensureCategoryOptions();
   }
 
   function cardHtml(p) {
@@ -40,75 +67,60 @@
     </div>`;
   }
 
-    async function loadProducts() {
+  async function loadProducts() {
     const grid = document.getElementById('product-grid');
     const serverWrap = document.getElementById('server-grid-wrapper');
-
     if (grid) grid.innerHTML = '';
     setState('state-loading');
-
     try {
-        const resp = await fetch(`/api/products/?filter=${encodeURIComponent(getQueryFilter())}`, { credentials: 'same-origin' });
-        if (!resp.ok) throw new Error('bad_status');
-        const json = await resp.json();
-        const items = (json && json.data) || [];
-        
-        if (!items.length) {
-          // show the server-rendered empty card instead of the plain "No products yet."
-          setState(null);
-          if (grid) grid.classList.add('hidden');
-          if (serverWrap) serverWrap.classList.remove('hidden');
-          return;
-        }
-    
+      const resp = await fetch(`/api/products/?filter=${encodeURIComponent(getQueryFilter())}`, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('bad_status');
+      const json = await resp.json();
+      const items = (json && json.data) || [];
+      if (!items.length) {
         setState(null);
-        if (serverWrap) serverWrap.classList.add('hidden');
-        if (grid) {
-          grid.classList.remove('hidden');
-          grid.innerHTML = items.map(cardHtml).join('');
-          wireActions();
-        }
-        } catch (e) {
-          // on error, prefer server fallback instead of a sad red sentence
-          setState(null);
-          if (grid) grid.classList.add('hidden');
-          if (serverWrap) serverWrap.classList.remove('hidden');
-        }
+        if (grid) grid.classList.add('hidden');
+        if (serverWrap) serverWrap.classList.remove('hidden');
+        return;
+      }
+      setState(null);
+      if (serverWrap) serverWrap.classList.add('hidden');
+      if (grid) {
+        grid.classList.remove('hidden');
+        grid.innerHTML = items.map(cardHtml).join('');
+        wireActions();
+      }
+    } catch (e) {
+      setState(null);
+      if (grid) grid.classList.add('hidden');
+      if (serverWrap) serverWrap.classList.remove('hidden');
     }
+  }
 
   function wireActions() {
     document.querySelectorAll('.js-edit').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
-        window.location.href = `/product/${btn.dataset.id}/edit/`;
+        currentEditId = btn.dataset.id;
+        await prefillUpdateFromApi(currentEditId);
+        openModal('update');
       });
     });
     document.querySelectorAll('.js-delete').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
-        const ok = confirm('Delete this product?'); // temporary until modal iteration
-        if (!ok) return;
-        const resp = await fetch(`/api/products/${btn.dataset.id}/`, {
-          method: 'DELETE',
-          headers: { 'X-CSRFToken': getCsrfToken() },
-          credentials: 'same-origin'
-        });
-        if (resp.ok) {
-          if (window.showToast) showToast('Deleted', 'Product removed', 'success', 2000);
-          loadProducts();
-        } else {
-          if (window.showToast) showToast('Error', 'Failed to delete', 'error', 2500);
-        }
+        currentDeleteId = btn.dataset.id;
+        openModal('delete');
       });
     });
   }
 
   function enableAjaxMode() {
-  const ajaxGrid = document.getElementById('product-grid');
-  if (!ajaxGrid) return false;
-  ajaxGrid.classList.remove('hidden');
-  return true;
- }
+    const ajaxGrid = document.getElementById('product-grid');
+    if (!ajaxGrid) return false;
+    ajaxGrid.classList.remove('hidden');
+    return true;
+  }
 
   function getCsrfToken() {
     const name = 'csrftoken';
@@ -116,16 +128,178 @@
     return m ? m[2] : '';
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-  const ajaxActive = enableAjaxMode();
+  function openModal(which) {
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    ['modal-create','modal-update','modal-delete'].forEach(id=>{
+      const el = document.getElementById(id); if (el) el.classList.add('hidden');
+    });
+    document.getElementById(`modal-${which}`)?.classList.remove('hidden');
+  }
 
-  const btn = document.getElementById('btn-refresh');
-  if (btn) {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (ajaxActive) loadProducts();
-      else window.location.reload();
+  function closeModal() {
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+    ['create-error','update-error','delete-error'].forEach(id=>{
+      const e = document.getElementById(id); if (e) { e.textContent = ''; e.classList.add('hidden'); }
     });
   }
-});
+
+  async function prefillUpdateFromApi(id) {
+    await loadCategories(); // ensure options are there
+    const form = document.getElementById('form-update');
+    if (!form) return;
+    const resp = await fetch(`/api/products/${id}/`, { credentials: 'same-origin' });
+    if (!resp.ok) return;
+    const json = await resp.json();
+    const p = (json && json.data) || {};
+    form.elements['name'].value = p.name ?? '';
+    form.elements['price'].value = p.price ?? '';
+    form.elements['thumbnail'].value = p.thumbnail ?? '';
+    // category
+    const sel = document.getElementById('update-category');
+    if (sel) {
+      ensureCategoryOptions();
+      const value = p.category ?? '';
+      if ([...sel.options].some(o=>o.value===value)) sel.value = value;
+      else if (sel.options.length) sel.selectedIndex = 0;
+    }
+    form.elements['description'].value = p.description ?? '';
+    form.elements['is_featured'].checked = !!p.is_featured;
+  }
+
+  async function createProduct(payload) {
+    const resp = await fetch('/api/products/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload)
+    });
+    return resp;
+  }
+
+  async function updateProduct(id, payload) {
+    const resp = await fetch(`/api/products/${id}/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload)
+    });
+    return resp;
+  }
+
+  async function deleteProduct(id) {
+    const resp = await fetch(`/api/products/${id}/`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+      credentials: 'same-origin'
+    });
+    return resp;
+  }
+
+  function formToPayload(form) {
+    return {
+      name: form.elements['name'].value,
+      price: form.elements['price'].value,
+      thumbnail: form.elements['thumbnail'].value,
+      category: form.elements['category'].value,
+      description: form.elements['description'].value,
+      is_featured: form.elements['is_featured'].checked
+    };
+  }
+
+  document.addEventListener('click', function(e){
+    if (e.target.matches('#modal-overlay')) closeModal();
+    if (e.target.hasAttribute('data-close')) { e.preventDefault(); closeModal(); }
+  });
+
+  // Create submit
+  document.addEventListener('submit', async function(e){
+    if (e.target && e.target.id === 'form-create') {
+      e.preventDefault();
+      const err = document.getElementById('create-error');
+      err.classList.add('hidden'); err.textContent = '';
+      const resp = await createProduct(formToPayload(e.target));
+      if (resp.ok) {
+        if (window.showToast) showToast('Created', 'Product added', 'success', 2000);
+        closeModal(); loadProducts();
+      } else {
+        const data = await safeJson(resp);
+        err.textContent = (data && (data.error || stringifyErrors(data.errors))) || 'Failed to create';
+        err.classList.remove('hidden');
+        if (window.showToast) showToast('Error', 'Failed to create', 'error', 2500);
+      }
+    }
+  });
+
+  // Update submit
+  document.addEventListener('submit', async function(e){
+    if (e.target && e.target.id === 'form-update') {
+      e.preventDefault();
+      if (!currentEditId) return;
+      const err = document.getElementById('update-error');
+      err.classList.add('hidden'); err.textContent = '';
+      const resp = await updateProduct(currentEditId, formToPayload(e.target));
+      if (resp.ok) {
+        if (window.showToast) showToast('Updated', 'Product saved', 'success', 2000);
+        closeModal(); loadProducts();
+      } else {
+        const data = await safeJson(resp);
+        err.textContent = (data && (data.error || stringifyErrors(data.errors))) || 'Failed to update';
+        err.classList.remove('hidden');
+        if (window.showToast) showToast('Error', 'Failed to update', 'error', 2500);
+      }
+    }
+  });
+
+  // Delete confirm
+  document.getElementById('btn-delete-confirm')?.addEventListener('click', async function(e){
+    e.preventDefault();
+    if (!currentDeleteId) return;
+    const err = document.getElementById('delete-error');
+    err.classList.add('hidden'); err.textContent = '';
+    const resp = await deleteProduct(currentDeleteId);
+    if (resp.ok) {
+      if (window.showToast) showToast('Deleted', 'Product removed', 'success', 2000);
+      closeModal(); loadProducts();
+    } else {
+      const data = await safeJson(resp);
+      err.textContent = (data && (data.error || stringifyErrors(data.errors))) || 'Failed to delete';
+      err.classList.remove('hidden');
+      if (window.showToast) showToast('Error', 'Failed to delete', 'error', 2500);
+    }
+  });
+
+  // Add button opens create after categories load
+  document.getElementById('btn-add')?.addEventListener('click', async function(e){
+    e.preventDefault();
+    const form = document.getElementById('form-create');
+    if (form) form.reset();
+    await loadCategories();
+    openModal('create');
+  });
+
+  document.addEventListener('DOMContentLoaded', async function () {
+    const ajaxActive = enableAjaxMode();
+    await loadCategories();
+    const btn = document.getElementById('btn-refresh');
+    if (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (ajaxActive) loadProducts(); else window.location.reload();
+      });
+    }
+    if (ajaxActive) loadProducts();
+  });
+
+  async function safeJson(resp) { try { return await resp.json(); } catch { return null; } }
+  function stringifyErrors(errors) {
+    if (!errors) return '';
+    try { return Object.entries(errors).map(([k,v])=>`${k}: ${Array.isArray(v)?v.join(', '):v}`).join('; '); }
+    catch { return ''; }
+  }
 })();

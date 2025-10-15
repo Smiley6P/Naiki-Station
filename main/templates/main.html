@@ -16,7 +16,12 @@
         <h1 class="text-3xl font-bold text-gray-900 mb-1">Latest Naiki Station Product (Tugas 6 Edition)</h1>
         <p class="text-gray-600">Stay updated with the newest Naiki Station Product and Promos</p>
       </div>
-      <button id="btn-refresh" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">Refresh</button>
+      <div class="flex gap-3">
+        {% if user.is_authenticated %}
+          <button id="btn-add" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Add</button>
+        {% endif %}
+        <button id="btn-refresh" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">Refresh</button>
+      </div>
     </div>
 
     <!-- Filter Section -->
@@ -69,6 +74,69 @@
       {% endif %}
     </div>
 
+
+<!-- Overlay + Modals -->
+<div id="modal-overlay" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <!-- Create -->
+  <div id="modal-create" class="bg-white w-full max-w-md rounded-xl p-5 hidden">
+    <h3 class="text-lg font-semibold mb-3">Create product</h3>
+    <form id="form-create" class="space-y-3">
+      <input name="name" type="text" placeholder="Name" class="w-full border rounded p-2" required>
+      <input name="price" type="number" placeholder="Price" class="w-full border rounded p-2" required>
+      <input name="thumbnail" type="url" placeholder="Thumbnail URL" class="w-full border rounded p-2">
+      <select name="category" id="create-category" class="w-full border rounded p-2"></select>
+      <textarea name="description" placeholder="Description" class="w-full border rounded p-2"></textarea>
+      <label class="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox"> Featured</label>
+      <div id="create-error" class="text-red-600 text-sm hidden"></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" data-close class="px-3 py-2 rounded border">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded bg-green-600 text-white">Save</button>
+      </div>
+    </form>
+  </div>
+
+
+  <!-- Update -->
+  <div id="modal-update" class="bg-white w-full max-w-md rounded-xl p-5 hidden">
+    <h3 class="text-lg font-semibold mb-3">Edit product</h3>
+    <form id="form-update" class="space-y-3">
+      <label class="text-sm font-medium">Title</label>
+      <input name="name" type="text" class="w-full border rounded p-2" required>
+
+      <label class="text-sm font-medium">Price</label>
+      <input name="price" type="number" class="w-full border rounded p-2" required>
+
+      <label class="text-sm font-medium">Thumbnail URL</label>
+      <input name="thumbnail" type="url" class="w-full border rounded p-2">
+
+      <label class="text-sm font-medium">Category</label>
+      <select name="category" id="update-category" class="w-full border rounded p-2"></select>
+
+      <label class="text-sm font-medium">Description</label>
+      <textarea name="description" class="w-full border rounded p-2"></textarea>
+
+      <label class="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox"> Featured</label>
+
+      <div id="update-error" class="text-red-600 text-sm hidden"></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" data-close class="px-3 py-2 rounded border">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white">Save</button>
+      </div>
+    </form>
+  </div>
+
+
+  <!-- Delete -->
+  <div id="modal-delete" class="bg-white w-full max-w-sm rounded-xl p-5 hidden">
+    <h3 class="text-lg font-semibold mb-3">Delete product</h3>
+    <p class="text-sm text-gray-600 mb-4">This action cannot be undone.</p>
+    <div id="delete-error" class="text-red-600 text-sm hidden"></div>
+    <div class="flex justify-end gap-2">
+      <button type="button" data-close class="px-3 py-2 rounded border">Cancel</button>
+      <button id="btn-delete-confirm" class="px-4 py-2 rounded bg-red-600 text-white">Delete</button>
+    </div>
+  </div>
+</div>
 
 <script src="{% static 'js/products.js' %}"></script>
 {% endblock content %}

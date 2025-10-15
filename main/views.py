@@ -195,9 +195,9 @@ def product_to_dict(p, request_user):
         "id": str(p.id),
         "name": p.name,
         "price": p.price,
-        "description": p.description,
-        "category": p.get_category_display() if hasattr(p, "get_category_display") else getattr(p, "category", ""),
-        "thumbnail": p.thumbnail or "",
+        "description": getattr(p, "description", "") or "",
+        "category": getattr(p, "category", "") or "",
+        "thumbnail": getattr(p, "thumbnail", "") or "",
         "is_featured": bool(getattr(p, "is_featured", False)),
         "discount": getattr(p, "discount", None),
         "rating": getattr(p, "rating", None),
@@ -205,7 +205,7 @@ def product_to_dict(p, request_user):
         "user": p.user.username if getattr(p, "user", None) else "",
         "is_owner": (request_user.is_authenticated and getattr(p, "user_id", None) == request_user.id),
         "detail_url": reverse("main:show_product", args=[str(p.id)]),
-        "edit_url": reverse("main:edit_product", args=[str(p.id)]),
+        "edit_url":  reverse("main:edit_product", args=[str(p.id)]),
         "delete_url": reverse("main:delete_product", args=[str(p.id)]),
     }
 
@@ -242,32 +242,43 @@ def show_products_api(request):
     return JsonResponse({"ok": False, "errors": form.errors}, status=400)
 
 # Add update/delete endpoint:
-@require_http_methods(["PATCH", "DELETE"])
+@require_http_methods(["GET", "PATCH", "DELETE"])
 def product_detail_api(request, id):
     try:
         p = Product.objects.get(pk=id)
     except Product.DoesNotExist:
         return JsonResponse({"ok": False, "error": "not_found"}, status=404)
 
+    if request.method == "GET":
+        return JsonResponse({"ok": True, "data": product_to_dict(p, request.user)}, status=200)
+
     if not request.user.is_authenticated:
         return JsonResponse({"ok": False, "error": "auth"}, status=401)
-    if getattr(p, "user_id", None) != request.user.id:
+
+    owner_id = getattr(p, "user_id", None)
+    if owner_id != request.user.id:
         return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
 
     if request.method == "DELETE":
         p.delete()
         return JsonResponse({"ok": True}, status=200)
 
-    # PATCH
     try:
         body = json.loads(request.body.decode("utf-8"))
     except Exception:
         return JsonResponse({"ok": False, "error": "bad_json"}, status=400)
 
-    # partial update
-    for field in ["name", "price", "description", "category", "thumbnail", "is_featured"]:
-        if field in body:
+    for field in ["name","price","description","category","thumbnail","is_featured"]:
+        if field in body and hasattr(p, field):
             setattr(p, field, body[field])
     p.save()
     return JsonResponse({"ok": True, "data": product_to_dict(p, request.user)}, status=200)
 
+
+def categories_api(request):
+    cats = []
+    try:
+        cats = [c[0] for c in Product.CATEGORY_CHOICES]
+    except Exception:
+        pass
+    return JsonResponse({"ok": True, "data": cats}, status=200)
