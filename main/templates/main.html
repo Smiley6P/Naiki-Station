@@ -4,16 +4,19 @@
 {% block meta %}
 <title>Naiki Station</title>
 {% endblock meta %}
-{% block content %}
 
+{% block content %}
 {% include 'navbar.html' %}
 <div class="bg-gray-50 w-full pt-16 min-h-screen">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
     <!-- Header Section -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Latest Naiki Station Product</h1>
-      <p class="text-gray-600">Stay updated with the newest Naiki Station Product and Promos</p>
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-1">Latest Naiki Station Product (Tugas 6 Edition)</h1>
+        <p class="text-gray-600">Stay updated with the newest Naiki Station Product and Promos</p>
+      </div>
+      <button id="btn-refresh" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">Refresh</button>
     </div>
 
     <!-- Filter Section -->
@@ -36,25 +39,36 @@
       {% endif %}
     </div>
 
-    <!-- product Grid -->
-    {% if not product_list %}
-      <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-        <div class="w-32 h-32 mx-auto mb-4">
-          <img src="{% static 'image/no-product.png' %}" alt="No product available" class="w-full h-full object-contain">
+        <!-- States -->
+    <div id="state-loading" class="hidden text-gray-500">Loading…</div>
+    <div id="state-error" class="hidden text-red-600">Something went wrong.</div>
+    <div id="state-empty" class="hidden text-gray-500">No products yet.</div>
+
+    <!-- AJAX grid-->
+    <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 hidden"></div>
+
+    <!-- Server-rendered fallback (will be hidden when AJAX is active) -->
+    <div id="server-grid-wrapper">
+      {% if not product_list %}
+        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div class="w-32 h-32 mx-auto mb-4">
+            <img src="{% static 'image/no-product.png' %}" alt="No product available" class="w-full h-full object-contain">
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No product is registered, yet.</h3>
+          <p class="text-gray-500 mb-6">Be the first to Sell your Product(s) in Naiki Station.</p>
+          <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+            Create product
+          </a>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No product is registered, yet.</h3>
-        <p class="text-gray-500 mb-6">Be the first to Sell your Product(s) in Naiki Station.</p>
-        <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-          Create product
-        </a>
-      </div>
-    {% else %}
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-       {% for product in product_list %}
-         {% include 'card_product.html' with product=product %}
-       {% endfor %}
-      </div>
-    {% endif %}
-  </div>
-</div>
+      {% else %}
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {% for product in product_list %}
+            {% include 'card_product.html' with product=product %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+
+<script src="{% static 'js/products.js' %}"></script>
 {% endblock content %}

@@ -10,6 +10,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import datetime
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
+import json
+
 
 # from models import Employee
 # from django.http import HttpResponse
@@ -181,3 +186,88 @@ def show_json_by_id(request, product_id):
 #         return redirect('main:show_main')
 #     context = {'form': form}
 #     return render(request, 'car.html', context)
+
+
+# TUGAS 6 - ajax and stuff
+# serialize a product dict for JSON
+def product_to_dict(p, request_user):
+    return {
+        "id": str(p.id),
+        "name": p.name,
+        "price": p.price,
+        "description": p.description,
+        "category": p.get_category_display() if hasattr(p, "get_category_display") else getattr(p, "category", ""),
+        "thumbnail": p.thumbnail or "",
+        "is_featured": bool(getattr(p, "is_featured", False)),
+        "discount": getattr(p, "discount", None),
+        "rating": getattr(p, "rating", None),
+        "sold_count": getattr(p, "sold_count", None),
+        "user": p.user.username if getattr(p, "user", None) else "",
+        "is_owner": (request_user.is_authenticated and getattr(p, "user_id", None) == request_user.id),
+        "detail_url": reverse("main:show_product", args=[str(p.id)]),
+        "edit_url": reverse("main:edit_product", args=[str(p.id)]),
+        "delete_url": reverse("main:delete_product", args=[str(p.id)]),
+    }
+
+#Add list/create endpoint:
+@require_http_methods(["GET", "POST"])
+def show_products_api(request):
+    if request.method == "GET":
+        flt = request.GET.get("filter", "all")
+        qs = Product.objects.all().order_by("-updated_at") if hasattr(Product, "updated_at") else Product.objects.all()
+        if flt == "my" and request.user.is_authenticated:
+            qs = qs.filter(user=request.user)
+        elif flt == "featured":
+            if hasattr(Product, "is_featured"):
+                qs = qs.filter(is_featured=True)
+            else:
+                qs = qs.none()
+        data = [product_to_dict(p, request.user) for p in qs]
+        return JsonResponse({"ok": True, "data": data}, status=200)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"ok": False, "error": "auth"}, status=401)
+
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"ok": False, "error": "bad_json"}, status=400)
+
+    form = ProductForm(body)
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.user = request.user
+        obj.save()
+        return JsonResponse({"ok": True, "data": product_to_dict(obj, request.user)}, status=201)
+    return JsonResponse({"ok": False, "errors": form.errors}, status=400)
+
+# Add update/delete endpoint:
+@require_http_methods(["PATCH", "DELETE"])
+def product_detail_api(request, id):
+    try:
+        p = Product.objects.get(pk=id)
+    except Product.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "not_found"}, status=404)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"ok": False, "error": "auth"}, status=401)
+    if getattr(p, "user_id", None) != request.user.id:
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    if request.method == "DELETE":
+        p.delete()
+        return JsonResponse({"ok": True}, status=200)
+
+    # PATCH
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"ok": False, "error": "bad_json"}, status=400)
+
+    # partial update
+    for field in ["name", "price", "description", "category", "thumbnail", "is_featured"]:
+        if field in body:
+            setattr(p, field, body[field])
+    p.save()
+    return JsonResponse({"ok": True, "data": product_to_dict(p, request.user)}, status=200)
+
