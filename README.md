@@ -600,6 +600,7 @@ d.  Menampilkan detail informasi pengguna yang sedang logged in seperti username
 
 
 # Tugas 5
+<details> <summary>Jawaban</summary>
 1. Jika terdapat beberapa CSS selector untuk suatu elemen HTML, jelaskan urutan prioritas pengambilan CSS selector tersebut!
 [ans]
 
@@ -791,4 +792,24 @@ Terakhir membuat navbar
 ![halaman main_page mobile hamburger](READMEFILES/tugas5-9.png)
 
 
+</details>
+
+
+# Tugas 6
+1. Apa perbedaan antara synchronous request dan asynchronous request?
+
+Pada synchronous request, program akan berhenti sementara sampai server selesai memproses dan mengirimkan balasan. Jadi, selama nunggu respons, program gak bisa lanjut ke perintah berikutnya dulu. Sementara itu, pada asynchronous request, program tidak perlu nunggu. Begitu kirim permintaan ke server, bisa langsung lanjut ke tugas lain, dan pas jawaban dari server sudah siap, baru hasilnya dikirim balik lewat callback atau promise.
+
+2. Bagaimana AJAX bekerja di Django (alur request–response)?
+AJAX di Django bekerja dengan cara JavaScript di sisi klien mengirim request ke server tanpa me-reload halaman. Saat pengguna melakukan aksi tertentu (seperti klik tombol), JavaScript mengirim permintaan ke URL Django menggunakan metode seperti fetch() atau XMLHttpRequest. Django kemudian menerima request itu, memprosesnya melalui views.py, mengambil atau mengubah data dari database menggunakan model, lalu mengirim kembali hasilnya dalam bentuk JSON melalui JsonResponse. Setelah itu, JavaScript menerima respons JSON tersebut dan memperbarui bagian tertentu dari halaman sesuai data yang diterima, tanpa harus memuat ulang seluruh halaman.
+
+3. Apa keuntungan menggunakan AJAX dibandingkan render biasa di Django?
+prosesnya lebih cepat dan efisien karena tidak perlu me-reload seluruh halaman setiap kali ada perubahan data. Dengan AJAX, hanya bagian tertentu dari halaman yang diperbarui, sementara elemen lain tetap sama. Ini membuat pengalaman pengguna lebih mulus dan interaktif. Selain itu, penggunaan AJAX menghemat bandwidth karena data yang dikirim antara klien dan server lebih sedikit dibandingkan render ulang seluruh halaman HTML. AJAX juga memungkinkan komunikasi dua arah antara browser dan server secara real time, misalnya untuk menampilkan notifikasi, memperbarui tabel data, atau memuat konten tambahan tanpa gangguan pada tampilan utama.
+
+4. Bagaimana cara memastikan keamanan saat menggunakan AJAX untuk fitur Login dan Register di Django?
+
+ Sertakan token CSRF dari cookie csrftoken pada header X-CSRFToken untuk setiap POST AJAX dan jangan gunakan csrf_exempt. Batasi metode ke POST dengan @require_POST, atur ALLOWED_HOSTS dan CSRF_TRUSTED_ORIGINS hanya ke domain valid, serta hindari CORS longgar. Lakukan validasi di server memakai AuthenticationForm/UserCreationForm atau forms dengan clean_*, hash password mengikuti standar Django, dan jangan pernah kirim kredensial melalui query string. Saat login gagal, gunakan pesan umum tanpa mengungkap apakah username terdaftar. Andalkan rotasi sesi otomatis saat login() dan pastikan ID sesi baru terpakai. Terapkan rate limiting/brute-force protection (mis. django-axes) dan CAPTCHA pada register. Tambahkan proteksi XSS melalui CSP dan sanitasi output, set X_FRAME_OPTIONS='DENY', serta verifikasi email dengan token kedaluwarsa sebelum akun aktif. Kembalikan respons JSON minimal dengan status code tepat (200/400/401/429) tanpa data sensitif, dan log percobaan mencurigakan untuk pemantauan
+
+5. Bagaimana AJAX mempengaruhi pengalaman pengguna (User Experience) pada website?
+AJAX meningkatkan pengalaman pengguna karena membuat website terasa lebih cepat dan responsif. Saat AJAX digunakan, perubahan data atau tampilan di halaman dapat dilakukan tanpa perlu memuat ulang seluruh halaman, sehingga interaksi terasa lebih lancar dan efisien. Hal ini mengurangi waktu tunggu dan penggunaan data, karena hanya bagian tertentu dari halaman yang diperbarui. Dengan AJAX, pengguna dapat mengirim formulir, memuat konten tambahan, atau memperbarui informasi secara langsung tanpa gangguan visual. Hasilnya, website menjadi lebih interaktif, dinamis, dan nyaman digunakan, terutama untuk aplikasi web yang memerlukan pembaruan data secara sering atau real time.
 ---
