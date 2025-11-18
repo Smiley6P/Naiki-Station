@@ -14,6 +14,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import json
+import requests
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.html import strip_tags
 
 
 # from models import Employee
@@ -25,11 +28,13 @@ def show_main(request):
     filter_type = request.GET.get("filter", "all")  # default 'all'
 
     if filter_type == "all":
-        Product_list = Product.objects.all()
+        product_list = Product.objects.all()
     elif filter_type == "my":
-        Product_list = Product.objects.filter(user=request.user)
+        product_list = Product.objects.filter(user=request.user)
     elif filter_type == "featured":
-            Product_list = Product.objects.filter(is_featured=True)
+        product_list = Product.objects.filter(is_featured=True)
+    else:
+        product_list = Product.objects.all()
 
     context = {
         'npm' : '2406403482',
@@ -37,7 +42,7 @@ def show_main(request):
         'class': 'PBP D',
 
         'loggedin_user': request.user.username,
-        'product_list': Product_list,
+        'product_list': product_list,
         'last_login': request.COOKIES.get('last_login', 'Never')
     }
 
@@ -327,3 +332,48 @@ def api_auth_register(request):
         "ok": False,
         "errors": form.errors.get_json_data()
     }, status=400)
+
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
+
+
+@csrf_exempt
+def create_product_flutter(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = strip_tags(data.get("title", ""))  # Strip HTML tags
+        description = strip_tags(data.get("description", ""))  # Strip HTML tags
+        category = data.get("category", "")
+        thumbnail = data.get("thumbnail", "")
+        is_featured = data.get("is_featured", False)
+        user = request.user
+        
+        new_product = Product(
+            title=title, 
+            description=description,
+            category=category,
+            thumbnail=thumbnail,
+            is_featured=is_featured,
+            user=user
+        )
+        new_product.save()
+        
+        return JsonResponse({"status": "success"}, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)

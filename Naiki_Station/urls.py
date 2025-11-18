@@ -4,5 +4,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls', namespace='main')),
+    path('auth/', include('authentication.urls')),
   # semua request di-root '/' dilempar ke urls.py app 'main'
 ]
