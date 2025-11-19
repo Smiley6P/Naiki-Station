@@ -212,6 +212,8 @@ def product_to_dict(p, request_user):
         "sold_count": getattr(p, "sold_count", None),
         "user": p.user.username if getattr(p, "user", None) else "",
         "is_owner": (request_user.is_authenticated and getattr(p, "user_id", None) == request_user.id),
+        "created_at": p.created_at.isoformat() if hasattr(p, "created_at") and p.created_at else None,
+        "last_viewed": p.last_viewed.isoformat() if hasattr(p, "last_viewed") and p.last_viewed else None,
         "detail_url": reverse("main:show_product", args=[str(p.id)]),
         "edit_url":  reverse("main:edit_product", args=[str(p.id)]),
         "delete_url": reverse("main:delete_product", args=[str(p.id)]),
@@ -357,15 +359,18 @@ def proxy_image(request):
 def create_product_flutter(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        title = strip_tags(data.get("title", ""))  # Strip HTML tags
-        description = strip_tags(data.get("description", ""))  # Strip HTML tags
+        
+        # Ganti "title" menjadi "name" agar sesuai dengan yang dikirim Flutter
+        name = strip_tags(data.get("name", "")) 
+        description = strip_tags(data.get("description", ""))
         category = data.get("category", "")
         thumbnail = data.get("thumbnail", "")
         is_featured = data.get("is_featured", False)
         user = request.user
         
         new_product = Product(
-            title=title, 
+            name=name,         # Ganti title=title menjadi name=name (sesuai models.py)
+            price=data.get("price", 0), # Jangan lupa ambil price juga!
             description=description,
             category=category,
             thumbnail=thumbnail,
